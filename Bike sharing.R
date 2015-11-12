@@ -112,7 +112,7 @@ Data2<-monthlyavg
 Monthly=rbind(Data1,Data2)
 Monthly
 ggplot(Monthly,aes(x=month,y=monthlyavg,group=DataType))+
-  geom_point(aes(colour=DataType,size=monthlyavg))+
+  geom_line(aes(colour=DataType,size=8))+
   ylab("Average demand") + 
   xlab("Month of the Year") +
   ggtitle("Average Monthly Demand")
