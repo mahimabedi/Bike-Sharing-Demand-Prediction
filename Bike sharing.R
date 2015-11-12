@@ -70,7 +70,85 @@ Rsq2
 
 predM2<-predict(M2,newdata=test)
 # RMSLE= 0.52538
+test$pred<-predM2
 
 submissionM2<- data.frame(datetime=test$datetime, count = predM2)
 write.csv(submissionM2, "Prediction.csv", row.names=FALSE)
 
+library(ggplot2)
+
+train$day <- as.factor(train$datetime$wday)
+summary(train$day)
+levels(train$day)<-c("Sunday", "Monday", "Tuesday", "Wednesday", "Thursday", 
+                     "Friday", "Saturday")
+levels(train$month)<-c("Jan", "Feb", "Mar", "Apr", "May", 
+                       "Jun", "Jul","Aug","Sep","Oct","Nov","Dec")
+str(train)
+
+test$day <- as.factor(test$datetime$wday)
+levels(test$day)<-c("Sunday", "Monday", "Tuesday", "Wednesday", "Thursday", 
+                     "Friday", "Saturday")
+levels(test$month)<-c("Jan", "Feb", "Mar", "Apr", "May", 
+                       "Jun", "Jul","Aug","Sep","Oct","Nov","Dec")
+
+#plot 1: Monthly Average Demand
+monthlyavg<-tapply(train$count,train$month,mean)
+monthlyavg<-as.data.frame(monthlyavg)
+monthlyavg$month<-c("Jan", "Feb", "Mar", "Apr", "May", 
+                    "Jun", "Jul","Aug","Sep","Oct","Nov","Dec")
+monthlyavg$month<-factor(monthlyavg$month,c("Jan", "Feb", "Mar", "Apr", "May", 
+                                            "Jun", "Jul","Aug","Sep","Oct","Nov","Dec"))
+ggplot(monthlyavg,aes(x=month,y=monthlyavg))+
+  geom_point(aes(size = monthlyavg),color="blue")+
+  ylab("Average demand") + 
+  xlab("Month of the Year") +
+  ggtitle("Monthly Average Demand")
+
+
+#plot 2: Monthly Average Demand Prediction
+monthlyavgPred<-tapply(test$pred,test$month,mean)
+monthlyavgPred<-as.data.frame(monthlyavgPred)
+monthlyavgPred$month<-c("Jan", "Feb", "Mar", "Apr", "May", 
+                    "Jun", "Jul","Aug","Sep","Oct","Nov","Dec")
+monthlyavgPred$month<-factor(monthlyavgPred$month,c("Jan", "Feb", "Mar", "Apr", "May", 
+                                            "Jun", "Jul","Aug","Sep","Oct","Nov","Dec"))
+ggplot(monthlyavgPred,aes(x=month,y=monthlyavgPred))+
+  geom_point(aes(size = monthlyavgPred),color="blue")+
+  ylab("Average demand") + 
+  xlab("Month of the Year") +
+  ggtitle("Monthly Average Demand Prediction")
+
+#plot3: Weekday distribution of demand
+cols=c("white","lightblue","blue")
+ggplot(train, aes(x=day,y=month))+
+  geom_tile(aes(fill=(log(count+0.0001))))+
+  scale_fill_gradientn(colours=cols)+
+  xlab("Day of the week") + 
+  ylab("Month of the Year") +
+  ggtitle("Weekday Distribution of Demand")+
+  guides(fill=guide_legend(title="Log of count"))
+
+#plot4: Monthly and Hourly
+cols=c("lightblue","darkblue")
+ggplot(train, aes(x=hour,y=month))+
+  geom_tile(aes(fill=count))+
+  scale_fill_gradientn(colours=cols) +
+  xlab("Hour of the Day") + 
+  ylab("Month of the Year") +
+  ggtitle("Monthly and Hourly Breakdown of Demand: Increased Demand in May Afternoons")
+
+#plot 5: Non-workday bike rentals
+ggplot(train[train$workingday==0,], aes(x=hour,y=count,color=temp))+
+  geom_point(aes(size=4))+
+  scale_colour_gradient(low = "yellow",high="red")+
+  xlab("Hour of the Day") + 
+  ylab("Number of Bike Rentals") +
+  ggtitle("Non-workday Bike Rentals: Highest During Warm Afternoons")
+
+#plot 6: Workday bike rentals
+ggplot(train[train$workingday==1,], aes(x=hour,y=count,color=temp))+
+  geom_point(aes(size=4))+
+  scale_colour_gradient(low = "yellow",high="red")+
+  xlab("Hour of the Day") + 
+  ylab("Number of Bike Rentals") +
+  ggtitle("Workday Bike Rentals: Highest During Morning and Evenings")
